@@ -1,4 +1,4 @@
-# CampaignPro - Influencer Marketing Platform
+# Creator Campaign Pro - Influencer Marketing Platform
 
 A comprehensive platform connecting brands with content creators for successful influencer marketing campaigns.
 

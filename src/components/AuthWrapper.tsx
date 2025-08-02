@@ -78,7 +78,7 @@ export default function AuthWrapper() {
         <div className="max-w-4xl w-full">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Welcome to CampaignPro
+              Welcome to Creator Campaign Pro
             </h1>
             <p className="text-xl text-gray-600">
               Choose your portal to get started
