@@ -756,6 +756,9 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
                     <div className="text-left">
                       <div className="font-medium text-gray-900">PayPal</div>
                       <div className="text-sm text-gray-500">Receive payments via PayPal</div>
+                    </div>
+                  </button>
+
                   <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <DollarSign className="w-8 h-8 text-purple-600 mr-4" />
                     <div className="text-left">
@@ -763,7 +766,7 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
                       <div className="text-sm text-gray-500">Fast and secure payments</div>
                     </div>
                   </button>
-                    </div>
+
                   <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <Globe className="w-8 h-8 text-green-600 mr-4" />
                     <div className="text-left">
@@ -772,7 +775,7 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
                     </div>
                   </button>
                 </div>
-                  </button>
+
                 <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="flex items-center">
                     <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
