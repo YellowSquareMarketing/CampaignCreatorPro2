@@ -71,6 +71,7 @@ npm run build
 - **Authentication**: Google OAuth 2.0
 - **Build Tool**: Vite
 - **Deployment**: Netlify
+- **Admin Panel**: Built-in management dashboard
 
 ## Project Structure
 
@@ -79,6 +80,8 @@ src/
 ├── components/          # React components
 │   ├── AuthWrapper.tsx     # Main authentication wrapper
 │   ├── GoogleAuth.tsx      # Google OAuth component
+│   ├── AdminAuth.tsx       # Admin authentication
+│   ├── AdminDashboard.tsx  # Admin management panel
 │   ├── Layout.tsx          # Main layout component
 │   ├── Dashboard.tsx       # Marketer dashboard
 │   ├── InfluencerDashboard.tsx  # Creator dashboard
@@ -92,6 +95,40 @@ src/
 ├── types/              # TypeScript type definitions
 └── utils/              # Utility functions
 ```
+
+## Admin Panel Access
+
+The application includes a comprehensive admin panel for developers and managers to monitor system performance and user analytics.
+
+### Accessing the Admin Panel
+
+1. **Local Development**: Navigate to `http://localhost:5173#admin`
+2. **Production**: Navigate to your deployed URL with `#admin` (e.g., `https://yourdomain.com#admin`)
+
+### Demo Admin Credentials
+
+```
+Email: admin@creatorcampaignpro.com
+Password: admin123
+Access Code: CCP2024
+```
+
+### Admin Features
+
+- **User Analytics**: Track user growth, retention, and engagement metrics
+- **System Metrics**: Monitor platform performance and resource usage
+- **Activity Logs**: View real-time user actions and system events
+- **Error Monitoring**: Track and analyze application errors
+- **Performance Metrics**: Real-time system performance monitoring
+- **Revenue Analytics**: Track platform revenue and campaign performance
+
+### Security Features
+
+- Multi-factor authentication (email + password + access code)
+- Role-based access control
+- Activity logging and monitoring
+- Secure session management
+- IP address tracking
 
 ## Environment Variables
 

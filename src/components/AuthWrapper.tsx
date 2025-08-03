@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Building2, Users } from 'lucide-react';
 import SetupInstructions from './SetupInstructions';
+import AdminAuth from './AdminAuth';
+import AdminDashboard from './AdminDashboard';
 import InfluencerAuth from './InfluencerAuth';
 import MarketerAuth from './MarketerAuth';
 import Layout from './Layout';
@@ -18,6 +20,7 @@ import { isGoogleConfigured } from '../config/google';
 export default function AuthWrapper() {
   const [userType, setUserType] = useState<'marketer' | 'influencer' | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [adminUser, setAdminUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
   const [campaigns, setCampaigns] = useLocalStorage('campaigns', []);
@@ -53,6 +56,27 @@ export default function AuthWrapper() {
   const handleAddInfluencer = (influencer: any) => {
     setDiscoveredInfluencers([...discoveredInfluencers, influencer]);
   };
+
+  const handleAdminLogin = (adminUserData: any) => {
+    setAdminUser(adminUserData);
+  };
+
+  const handleAdminLogout = () => {
+    setAdminUser(null);
+  };
+
+  // Check for admin access in URL
+  const isAdminRoute = window.location.pathname === '/admin' || window.location.hash === '#admin';
+
+  // Show admin auth if admin route is accessed
+  if (isAdminRoute && !adminUser) {
+    return <AdminAuth onLogin={handleAdminLogin} />;
+  }
+
+  // Show admin dashboard if admin is logged in
+  if (adminUser) {
+    return <AdminDashboard adminUser={adminUser} onLogout={handleAdminLogout} />;
+  }
 
   // Show setup instructions if requested
   if (showSetupInstructions) {
@@ -167,12 +191,17 @@ export default function AuthWrapper() {
           
           {/* Setup Instructions Link */}
           <div className="mt-8 text-center">
+            <div className="space-y-2">
             <button
               onClick={() => setShowSetupInstructions(true)}
               className="text-blue-600 hover:text-blue-800 font-medium text-sm"
             >
               Need help setting up Google OAuth? Click here for instructions
             </button>
+            <div className="text-gray-400 text-xs">
+              Admin access: <a href="#admin" className="text-gray-600 hover:text-gray-800">Click here</a>
+            </div>
+            </div>
           </div>
         </div>
       </div>
