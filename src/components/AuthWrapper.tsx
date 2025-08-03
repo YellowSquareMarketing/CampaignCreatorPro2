@@ -65,6 +65,31 @@ export default function AuthWrapper() {
     setAdminUser(null);
   };
 
+  // Force admin mode function
+  const forceAdminMode = () => {
+    console.log('🔧 Forcing Admin Mode...');
+    console.log('Current URL:', window.location.href);
+    console.log('Current Hash:', window.location.hash);
+    
+    // Set hash and force state update
+    window.location.hash = 'admin';
+    
+    // Force component re-render by updating state
+    setUser(null);
+    setUserType(null);
+    
+    // Log success
+    console.log('✅ Admin mode forced - should show admin login');
+    
+    // Force page reload as backup
+    setTimeout(() => {
+      if (!isAdminRoute()) {
+        console.log('🔄 Hash not detected, forcing reload...');
+        window.location.reload();
+      }
+    }, 100);
+  };
+
   // Check for admin access in URL - more comprehensive check
   const isAdminRoute = () => {
     const hash = window.location.hash;
@@ -229,14 +254,11 @@ export default function AuthWrapper() {
                 <span className="text-gray-400">|</span>
                 <button
                   onClick={() => {
-                    console.log('Current URL:', window.location.href);
-                    console.log('Hash:', window.location.hash);
-                    window.location.hash = 'admin';
-                    window.location.reload();
+                    forceAdminMode();
                   }}
                   className="text-red-600 hover:text-red-800 underline"
                 >
-                  Force Admin Access
+                  🚀 Force Admin Access
                 </button>
               </div>
             </div>
