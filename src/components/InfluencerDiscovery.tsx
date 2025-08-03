@@ -20,7 +20,12 @@ import {
   CheckCircle,
   UserPlus,
   Eye,
-  Sparkles
+  Sparkles,
+  Bot,
+  Target,
+  Wand2,
+  Brain,
+  X
 } from 'lucide-react';
 import { formatNumber, formatCurrency, getStatusColor } from '../utils/formatters';
 import type { Influencer } from '../types';
@@ -215,6 +220,65 @@ interface InfluencerDiscoveryProps {
   onAddInfluencer?: (influencer: Influencer) => void;
 }
 
+interface AIMatchingCriteria {
+  productCategory: string;
+  targetAudience: string;
+  campaignType: string;
+  budget: string;
+  brandValues: string[];
+  contentStyle: string;
+}
+
+const productCategories = [
+  'Fashion & Apparel',
+  'Beauty & Cosmetics', 
+  'Technology & Electronics',
+  'Health & Wellness',
+  'Food & Beverage',
+  'Travel & Tourism',
+  'Fitness & Sports',
+  'Home & Lifestyle',
+  'Gaming & Entertainment',
+  'Education & Learning',
+  'Finance & Business',
+  'Automotive'
+];
+
+const campaignTypes = [
+  'Product Launch',
+  'Brand Awareness',
+  'Sales Drive',
+  'App Promotion',
+  'Event Marketing',
+  'User-Generated Content',
+  'Seasonal Campaign',
+  'Influencer Takeover'
+];
+
+const brandValues = [
+  'Sustainability',
+  'Innovation',
+  'Authenticity',
+  'Inclusivity',
+  'Quality',
+  'Affordability',
+  'Luxury',
+  'Community',
+  'Wellness',
+  'Adventure'
+];
+
+const contentStyles = [
+  'Professional & Polished',
+  'Casual & Authentic',
+  'Creative & Artistic',
+  'Educational & Informative',
+  'Humorous & Entertaining',
+  'Minimalist & Clean',
+  'Bold & Energetic',
+  'Lifestyle & Aspirational'
+];
+
 export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDiscoveryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -225,6 +289,18 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
   const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [addedInfluencers, setAddedInfluencers] = useState<Set<string>>(new Set());
+  const [showAIMatching, setShowAIMatching] = useState(false);
+  const [aiCriteria, setAiCriteria] = useState<AIMatchingCriteria>({
+    productCategory: '',
+    targetAudience: '',
+    campaignType: '',
+    budget: '',
+    brandValues: [],
+    contentStyle: ''
+  });
+  const [aiMatches, setAiMatches] = useState<Influencer[]>([]);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [aiMatchScore, setAiMatchScore] = useState<{[key: string]: number}>({});
 
   // Simulate real-time search with debouncing
   useEffect(() => {
@@ -300,6 +376,121 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
     }, 3000);
   };
 
+  const handleBrandValueToggle = (value: string) => {
+    const updatedValues = aiCriteria.brandValues.includes(value)
+      ? aiCriteria.brandValues.filter(v => v !== value)
+      : [...aiCriteria.brandValues, value];
+    
+    setAiCriteria({ ...aiCriteria, brandValues: updatedValues });
+  };
+
+  const calculateAIMatchScore = (influencer: Influencer, criteria: AIMatchingCriteria): number => {
+    let score = 0;
+    let maxScore = 0;
+
+    // Category matching (30% weight)
+    maxScore += 30;
+    if (criteria.productCategory) {
+      const categoryMap: {[key: string]: string[]} = {
+        'Fashion & Apparel': ['Fashion & Style', 'Fashion & Lifestyle'],
+        'Beauty & Cosmetics': ['Beauty & Lifestyle', 'Health & Wellness'],
+        'Technology & Electronics': ['Technology'],
+        'Health & Wellness': ['Health & Wellness', 'Fitness & Health'],
+        'Food & Beverage': ['Food & Cooking'],
+        'Travel & Tourism': ['Travel & Adventure'],
+        'Fitness & Sports': ['Fitness & Health'],
+        'Gaming & Entertainment': ['Gaming', 'Entertainment']
+      };
+      
+      const matchingCategories = categoryMap[criteria.productCategory] || [];
+      if (matchingCategories.some(cat => influencer.category.includes(cat))) {
+        score += 30;
+      }
+    }
+
+    // Engagement rate (25% weight)
+    maxScore += 25;
+    if (influencer.engagementRate >= 6) score += 25;
+    else if (influencer.engagementRate >= 4) score += 20;
+    else if (influencer.engagementRate >= 2) score += 15;
+    else score += 10;
+
+    // Follower count vs budget (20% weight)
+    maxScore += 20;
+    const budgetRanges: {[key: string]: [number, number]} = {
+      'Under $5,000': [0, 50000],
+      '$5,000 - $15,000': [50000, 200000],
+      '$15,000 - $50,000': [200000, 500000],
+      'Over $50,000': [500000, Infinity]
+    };
+    
+    if (criteria.budget && budgetRanges[criteria.budget]) {
+      const [minFollowers, maxFollowers] = budgetRanges[criteria.budget];
+      if (influencer.followers >= minFollowers && influencer.followers <= maxFollowers) {
+        score += 20;
+      } else if (Math.abs(influencer.followers - minFollowers) < 50000) {
+        score += 15;
+      }
+    }
+
+    // Rating and reliability (15% weight)
+    maxScore += 15;
+    if (influencer.rating >= 4.5) score += 15;
+    else if (influencer.rating >= 4.0) score += 12;
+    else if (influencer.rating >= 3.5) score += 8;
+    else score += 5;
+
+    // Verification and experience (10% weight)
+    maxScore += 10;
+    if (influencer.verified) score += 5;
+    if (influencer.completedCampaigns >= 20) score += 5;
+    else if (influencer.completedCampaigns >= 10) score += 3;
+    else if (influencer.completedCampaigns >= 5) score += 2;
+
+    return Math.round((score / maxScore) * 100);
+  };
+
+  const runAIMatching = async () => {
+    setIsAIProcessing(true);
+    
+    // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Calculate match scores for all influencers
+    const scoredInfluencers = discoveryInfluencers.map(influencer => ({
+      influencer,
+      score: calculateAIMatchScore(influencer, aiCriteria)
+    }));
+    
+    // Sort by score and take top matches
+    const topMatches = scoredInfluencers
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
+      .filter(match => match.score >= 60); // Only show matches with 60%+ compatibility
+    
+    const matchScores: {[key: string]: number} = {};
+    topMatches.forEach(match => {
+      matchScores[match.influencer.id] = match.score;
+    });
+    
+    setAiMatches(topMatches.map(match => match.influencer));
+    setAiMatchScore(matchScores);
+    setIsAIProcessing(false);
+  };
+
+  const resetAIMatching = () => {
+    setShowAIMatching(false);
+    setAiMatches([]);
+    setAiMatchScore({});
+    setAiCriteria({
+      productCategory: '',
+      targetAudience: '',
+      campaignType: '',
+      budget: '',
+      brandValues: [],
+      contentStyle: ''
+    });
+  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -314,9 +505,18 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <div className="flex items-center text-sm text-gray-500">
-            <Zap className="h-4 w-4 mr-1 text-green-500" />
-            Live Search • {filteredInfluencers.length} creators found
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowAIMatching(true)}
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              AI Smart Match
+            </button>
+            <div className="flex items-center text-sm text-gray-500">
+              <Zap className="h-4 w-4 mr-1 text-green-500" />
+              {aiMatches.length > 0 ? `${aiMatches.length} AI matches` : `${filteredInfluencers.length} creators found`}
+            </div>
           </div>
         </div>
       </div>
@@ -433,14 +633,55 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
       </div>
 
       {/* Results */}
+      {aiMatches.length > 0 && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Brain className="w-5 h-5 text-purple-600 mr-2" />
+              <h3 className="text-lg font-medium text-purple-900">AI-Powered Matches</h3>
+              <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {aiMatches.length} Perfect Matches
+              </span>
+            </div>
+            <button
+              onClick={resetAIMatching}
+              className="text-purple-600 hover:text-purple-800"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <p className="text-sm text-purple-700 mb-4">
+            Based on your criteria: {aiCriteria.productCategory} • {aiCriteria.campaignType} • {aiCriteria.budget}
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredInfluencers.map((influencer) => {
+        {(aiMatches.length > 0 ? aiMatches : filteredInfluencers).map((influencer) => {
           const PlatformIcon = getPlatformIcon(influencer.platform);
           const isAdded = addedInfluencers.has(influencer.id);
+          const matchScore = aiMatchScore[influencer.id];
           
           return (
-            <div key={influencer.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-200 hover:border-blue-200">
+            <div key={influencer.id} className={clsx(
+              "bg-white rounded-lg shadow-sm border hover:shadow-lg transition-all duration-200",
+              matchScore ? "border-purple-300 ring-2 ring-purple-100" : "border-gray-200 hover:border-blue-200"
+            )}>
               <div className="p-6">
+                {/* AI Match Score */}
+                {matchScore && (
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
+                      <Target size={12} className="mr-1" />
+                      {matchScore}% Match
+                    </span>
+                    <div className="flex items-center">
+                      <Wand2 size={14} className="text-purple-500 mr-1" />
+                      <span className="text-xs text-purple-600 font-medium">AI Recommended</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Profile Header */}
                 <div className="flex items-center mb-4">
                   <div className="relative">
@@ -604,9 +845,16 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
                       {selectedInfluencer.verified && (
                         <Star size={18} className="ml-2 text-blue-500 fill-current" />
                       )}
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        New Discovery
-                      </span>
+                      {aiMatchScore[selectedInfluencer.id] ? (
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800">
+                          <Target size={12} className="mr-1" />
+                          {aiMatchScore[selectedInfluencer.id]}% AI Match
+                        </span>
+                      ) : (
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          New Discovery
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-500">{selectedInfluencer.username}</p>
                     <div className="flex items-center mt-1">
@@ -764,6 +1012,169 @@ export default function InfluencerDiscovery({ onAddInfluencer }: InfluencerDisco
                 >
                   <UserPlus size={14} className="mr-1" />
                   Add to Network
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Matching Modal */}
+      {showAIMatching && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowAIMatching(false)} />
+            
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                    <Brain className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-medium text-gray-900">AI Smart Matching</h3>
+                    <p className="text-sm text-gray-500">Tell us about your brand and campaign goals</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAIMatching(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Product Category */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Product/Service Category *
+                  </label>
+                  <select
+                    value={aiCriteria.productCategory}
+                    onChange={(e) => setAiCriteria({ ...aiCriteria, productCategory: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    <option value="">Select your product category</option>
+                    {productCategories.map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Target Audience */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Target Audience
+                  </label>
+                  <input
+                    type="text"
+                    value={aiCriteria.targetAudience}
+                    onChange={(e) => setAiCriteria({ ...aiCriteria, targetAudience: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    placeholder="e.g., Young professionals, fitness enthusiasts, tech-savvy millennials"
+                  />
+                </div>
+
+                {/* Campaign Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Campaign Type *
+                  </label>
+                  <select
+                    value={aiCriteria.campaignType}
+                    onChange={(e) => setAiCriteria({ ...aiCriteria, campaignType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    <option value="">Select campaign type</option>
+                    {campaignTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Budget Range */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget Range *
+                  </label>
+                  <select
+                    value={aiCriteria.budget}
+                    onChange={(e) => setAiCriteria({ ...aiCriteria, budget: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    <option value="">Select your budget range</option>
+                    <option value="Under $5,000">Under $5,000</option>
+                    <option value="$5,000 - $15,000">$5,000 - $15,000</option>
+                    <option value="$15,000 - $50,000">$15,000 - $50,000</option>
+                    <option value="Over $50,000">Over $50,000</option>
+                  </select>
+                </div>
+
+                {/* Brand Values */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Brand Values (Select all that apply)
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {brandValues.map((value) => (
+                      <button
+                        key={value}
+                        onClick={() => handleBrandValueToggle(value)}
+                        className={clsx(
+                          'px-3 py-2 text-sm border rounded-md transition-colors',
+                          aiCriteria.brandValues.includes(value)
+                            ? 'border-purple-500 bg-purple-50 text-purple-700'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                        )}
+                      >
+                        {value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Content Style */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preferred Content Style
+                  </label>
+                  <select
+                    value={aiCriteria.contentStyle}
+                    onChange={(e) => setAiCriteria({ ...aiCriteria, contentStyle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    <option value="">Select content style preference</option>
+                    {contentStyles.map(style => (
+                      <option key={style} value={style}>{style}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowAIMatching(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={runAIMatching}
+                  disabled={!aiCriteria.productCategory || !aiCriteria.campaignType || !aiCriteria.budget || isAIProcessing}
+                  className="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-md font-medium hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center"
+                >
+                  {isAIProcessing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      AI Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Find Perfect Matches
+                    </>
+                  )}
                 </button>
               </div>
             </div>
