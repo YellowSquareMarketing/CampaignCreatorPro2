@@ -159,3 +159,43 @@ export interface User {
   profile?: InfluencerProfile;
   createdAt: string;
 }
+
+export interface PaymentMethod {
+  id: string;
+  type: 'bank_account' | 'paypal' | 'stripe' | 'wise' | 'crypto';
+  name: string;
+  details: string;
+  isDefault: boolean;
+  isVerified: boolean;
+  addedAt: string;
+}
+
+export interface Payment {
+  id: string;
+  campaignId: string;
+  campaignName: string;
+  brandName: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'disputed';
+  paymentMethod: string;
+  dueDate: string;
+  paidDate?: string;
+  description: string;
+  deliverables: string[];
+  taxInfo?: {
+    taxRate: number;
+    taxAmount: number;
+    netAmount: number;
+  };
+}
+
+export interface EarningsStats {
+  totalEarnings: number;
+  pendingPayments: number;
+  thisMonthEarnings: number;
+  lastMonthEarnings: number;
+  averagePayment: number;
+  completedPayments: number;
+  paymentMethods: number;
+}

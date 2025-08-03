@@ -462,3 +462,83 @@ export const mockSocialMediaAPI = {
     }
   }
 };
+
+// Mock payment data for creators
+export const mockPaymentMethods = [
+  {
+    id: '1',
+    type: 'bank_account' as const,
+    name: 'Chase Bank Account',
+    details: '****1234',
+    isDefault: true,
+    isVerified: true,
+    addedAt: '2024-01-15'
+  },
+  {
+    id: '2',
+    type: 'paypal' as const,
+    name: 'PayPal Account',
+    details: 'creator@email.com',
+    isDefault: false,
+    isVerified: true,
+    addedAt: '2024-02-01'
+  }
+];
+
+export const mockPayments = [
+  {
+    id: '1',
+    campaignId: '1',
+    campaignName: 'Summer Fashion Collection Launch',
+    brandName: 'StyleCo',
+    amount: 2500,
+    currency: 'USD',
+    status: 'completed' as const,
+    paymentMethod: 'Chase Bank Account',
+    dueDate: '2024-01-15',
+    paidDate: '2024-01-14',
+    description: '2 Instagram Posts + 4 Stories',
+    deliverables: ['Instagram Post #1', 'Instagram Post #2', '4 Instagram Stories'],
+    taxInfo: {
+      taxRate: 0.24,
+      taxAmount: 600,
+      netAmount: 1900
+    }
+  },
+  {
+    id: '2',
+    campaignId: '2',
+    campaignName: 'Fitness App Beta Launch',
+    brandName: 'FitLife App',
+    amount: 1800,
+    currency: 'USD',
+    status: 'pending' as const,
+    paymentMethod: 'PayPal Account',
+    dueDate: '2024-02-20',
+    description: '1 YouTube Video + 3 Instagram Reels',
+    deliverables: ['YouTube Review Video', 'Instagram Reel #1', 'Instagram Reel #2', 'Instagram Reel #3']
+  },
+  {
+    id: '3',
+    campaignId: '3',
+    campaignName: 'Sustainable Beauty Brand Awareness',
+    brandName: 'EcoBeauty Co.',
+    amount: 1200,
+    currency: 'USD',
+    status: 'processing' as const,
+    paymentMethod: 'Chase Bank Account',
+    dueDate: '2024-02-10',
+    description: '3 Instagram Posts + Blog Review',
+    deliverables: ['Instagram Post #1', 'Instagram Post #2', 'Instagram Post #3', 'Blog Review']
+  }
+];
+
+export const mockEarningsStats = {
+  totalEarnings: 12450,
+  pendingPayments: 3000,
+  thisMonthEarnings: 4250,
+  lastMonthEarnings: 3800,
+  averagePayment: 2075,
+  completedPayments: 6,
+  paymentMethods: 2
+};

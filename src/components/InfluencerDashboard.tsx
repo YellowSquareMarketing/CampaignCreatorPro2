@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { formatNumber, formatCurrency, formatDate } from '../utils/formatters';
 import type { InfluencerProfile, SocialMediaAccount } from '../types';
+import { mockPayments, mockPaymentMethods, mockEarningsStats } from '../data/mockData';
 import clsx from 'clsx';
 
 interface InfluencerDashboardProps {
@@ -90,6 +91,8 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
     completedCampaigns: 0
   });
   const [isUpdatingAnalytics, setIsUpdatingAnalytics] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState(mockPaymentMethods);
+  const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
 
   const connectSocialAccount = (platform: string) => {
     setIsUpdatingAnalytics(true);
@@ -180,7 +183,7 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Earnings (30d)</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(4250)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockEarningsStats.thisMonthEarnings)}</p>
             </div>
           </div>
         </div>
@@ -440,6 +443,199 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
     </div>
   );
 
+  const renderPayments = () => (
+    <div className="space-y-6">
+      {/* Earnings Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <DollarSign className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Earnings</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockEarningsStats.totalEarnings)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Clock className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Pending</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockEarningsStats.pendingPayments)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">This Month</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockEarningsStats.thisMonthEarnings)}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Star className="w-6 h-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Avg Payment</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockEarningsStats.averagePayment)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Methods */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-medium text-gray-900">Payment Methods</h3>
+          <button
+            onClick={() => setShowAddPaymentMethod(true)}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Method
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {paymentMethods.map((method) => (
+            <div key={method.id} className="border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                    {method.type === 'bank_account' && <DollarSign className="w-5 h-5 text-gray-600" />}
+                    {method.type === 'paypal' && <Globe className="w-5 h-5 text-blue-600" />}
+                    {method.type === 'stripe' && <DollarSign className="w-5 h-5 text-purple-600" />}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">{method.name}</p>
+                    <p className="text-sm text-gray-500">{method.details}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {method.isDefault && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Default
+                    </span>
+                  )}
+                  {method.isVerified ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Added {formatDate(method.addedAt)}</span>
+                <span>{method.isVerified ? 'Verified' : 'Pending Verification'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Payment History */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Payment History</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Campaign
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Due Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Method
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {mockPayments.map((payment) => (
+                <tr key={payment.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{payment.campaignName}</div>
+                      <div className="text-sm text-gray-500">{payment.brandName}</div>
+                      <div className="text-xs text-gray-400">{payment.description}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{formatCurrency(payment.amount)}</div>
+                    {payment.taxInfo && (
+                      <div className="text-xs text-gray-500">
+                        Net: {formatCurrency(payment.taxInfo.netAmount)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={clsx(
+                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                      payment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      payment.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                      payment.status === 'failed' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    )}>
+                      {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatDate(payment.dueDate)}
+                    {payment.paidDate && (
+                      <div className="text-xs text-gray-500">
+                        Paid: {formatDate(payment.paidDate)}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {payment.paymentMethod}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Tax Information */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex items-center mb-4">
+          <AlertCircle className="w-5 h-5 text-blue-600 mr-2" />
+          <h4 className="text-lg font-medium text-blue-900">Tax Information</h4>
+        </div>
+        <div className="space-y-2 text-sm text-blue-800">
+          <p>• All payments are subject to applicable taxes based on your location</p>
+          <p>• Tax documents (1099-NEC) will be provided for earnings over $600/year</p>
+          <p>• You're responsible for reporting all income to tax authorities</p>
+          <p>• Consider consulting a tax professional for advice on creator income</p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -481,6 +677,7 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
             {[
               { id: 'overview', name: 'Overview', icon: TrendingUp },
               { id: 'profile', name: 'Profile', icon: User },
+              { id: 'payments', name: 'Payments', icon: DollarSign },
               { id: 'campaigns', name: 'Campaigns', icon: Calendar },
               { id: 'analytics', name: 'Analytics', icon: Eye }
             ].map((tab) => {
@@ -509,6 +706,7 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'profile' && renderProfile()}
+        {activeTab === 'payments' && renderPayments()}
         {activeTab === 'campaigns' && (
           <div className="text-center py-12">
             <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -521,6 +719,70 @@ export default function InfluencerDashboard({ user, onLogout }: InfluencerDashbo
             <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Detailed Analytics</h3>
             <p className="text-gray-500">View comprehensive performance metrics and insights.</p>
+          </div>
+        )}
+
+        {/* Add Payment Method Modal */}
+        {showAddPaymentMethod && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setShowAddPaymentMethod(false)} />
+              
+              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">Add Payment Method</h3>
+                    <p className="mt-1 text-sm text-gray-500">Choose how you'd like to receive payments</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddPaymentMethod(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <DollarSign className="w-8 h-8 text-gray-600 mr-4" />
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900">Bank Account</div>
+                      <div className="text-sm text-gray-500">Direct deposit to your bank account</div>
+                    </div>
+                  </button>
+
+                  <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Globe className="w-8 h-8 text-blue-600 mr-4" />
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900">PayPal</div>
+                      <div className="text-sm text-gray-500">Receive payments via PayPal</div>
+                  <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <DollarSign className="w-8 h-8 text-purple-600 mr-4" />
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900">Stripe</div>
+                      <div className="text-sm text-gray-500">Fast and secure payments</div>
+                    </div>
+                  </button>
+                    </div>
+                  <button className="w-full flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Globe className="w-8 h-8 text-green-600 mr-4" />
+                    <div className="text-left">
+                      <div className="font-medium text-gray-900">Wise (formerly TransferWise)</div>
+                      <div className="text-sm text-gray-500">International payments with low fees</div>
+                    </div>
+                  </button>
+                </div>
+                  </button>
+                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
+                    <p className="text-sm text-yellow-800">
+                      Payment methods require verification before they can be used. This process typically takes 1-3 business days.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
