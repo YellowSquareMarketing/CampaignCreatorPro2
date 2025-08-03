@@ -238,12 +238,6 @@ export default function AuthWrapper() {
           {/* Setup Instructions Link */}
           <div className="mt-8 text-center">
             <div className="space-y-2">
-              <button
-                onClick={() => setShowSetupInstructions(true)}
-                className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-              >
-                Need help setting up Google OAuth? Click here for instructions
-              </button>
               <div className="flex justify-center space-x-4 text-xs">
                 <button 
                   onClick={() => window.location.hash = 'admin'} 
