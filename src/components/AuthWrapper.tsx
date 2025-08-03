@@ -65,11 +65,32 @@ export default function AuthWrapper() {
     setAdminUser(null);
   };
 
-  // Check for admin access in URL
-  const isAdminRoute = window.location.pathname === '/admin' || window.location.hash === '#admin';
+  // Check for admin access in URL - more comprehensive check
+  const isAdminRoute = () => {
+    const hash = window.location.hash;
+    const pathname = window.location.pathname;
+    const search = window.location.search;
+    
+    return hash === '#admin' || 
+           hash.includes('admin') || 
+           pathname === '/admin' || 
+           pathname.includes('/admin') ||
+           search.includes('admin=true');
+  };
+
+  // Listen for hash changes to detect admin route
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      // Force re-render when hash changes
+      setUser(prev => ({ ...prev }));
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Show admin auth if admin route is accessed
-  if (isAdminRoute && !adminUser) {
+  if (isAdminRoute() && !adminUser) {
     return <AdminAuth onLogin={handleAdminLogin} />;
   }
 
@@ -192,15 +213,32 @@ export default function AuthWrapper() {
           {/* Setup Instructions Link */}
           <div className="mt-8 text-center">
             <div className="space-y-2">
-            <button
-              onClick={() => setShowSetupInstructions(true)}
-              className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-            >
-              Need help setting up Google OAuth? Click here for instructions
-            </button>
-            <div className="text-gray-400 text-xs">
-              Admin access: <a href="#admin" className="text-gray-600 hover:text-gray-800">Click here</a>
-            </div>
+              <button
+                onClick={() => setShowSetupInstructions(true)}
+                className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+              >
+                Need help setting up Google OAuth? Click here for instructions
+              </button>
+              <div className="flex justify-center space-x-4 text-xs">
+                <button 
+                  onClick={() => window.location.hash = 'admin'} 
+                  className="text-gray-600 hover:text-gray-800 underline"
+                >
+                  Admin Panel
+                </button>
+                <span className="text-gray-400">|</span>
+                <button
+                  onClick={() => {
+                    console.log('Current URL:', window.location.href);
+                    console.log('Hash:', window.location.hash);
+                    window.location.hash = 'admin';
+                    window.location.reload();
+                  }}
+                  className="text-red-600 hover:text-red-800 underline"
+                >
+                  Force Admin Access
+                </button>
+              </div>
             </div>
           </div>
         </div>
