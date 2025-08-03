@@ -83,6 +83,15 @@ export const useGoogleAuth = () => {
         return;
       }
 
+      // Check if we're in a webcontainer environment and show helpful error
+      if (window.location.hostname.includes('webcontainer-api.io')) {
+        const currentOrigin = window.location.origin;
+        console.warn('WebContainer Environment Detected');
+        console.warn('Current Origin:', currentOrigin);
+        console.warn('Make sure this exact URL is added to your Google OAuth Authorized JavaScript origins:');
+        console.warn(currentOrigin);
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -118,14 +127,16 @@ export const useGoogleAuth = () => {
       // Trigger Google sign-in
       window.google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          console.log('Google prompt not displayed, trying popup method...');
           // Fallback to popup if prompt is not displayed
-          window.google.accounts.oauth2.initTokenClient({
+          try {
+            window.google.accounts.oauth2.initTokenClient({
             client_id: GOOGLE_CONFIG.clientId,
             scope: GOOGLE_CONFIG.scope,
             callback: (response: any) => {
               if (response.error) {
                 setIsLoading(false);
-                setError('Authentication failed');
+                setError(`Authentication failed: ${response.error}. Please check your Google OAuth configuration.`);
                 reject(new Error(response.error));
                 return;
               }
@@ -153,7 +164,12 @@ export const useGoogleAuth = () => {
                   reject(error);
                 });
             },
-          }).requestAccessToken();
+            }).requestAccessToken();
+          } catch (popupError) {
+            setIsLoading(false);
+            setError('Popup blocked by browser. Please allow popups for this site and try again.');
+            reject(new Error('Popup blocked'));
+          }
         }
       });
     });

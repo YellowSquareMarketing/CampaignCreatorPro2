@@ -10,7 +10,11 @@ export default function SetupInstructions() {
     setTimeout(() => setCopiedStep(null), 2000);
   };
 
+  // Get the actual current domain from the browser
   const currentDomain = window.location.origin;
+  const webcontainerDomain = window.location.hostname.includes('webcontainer-api.io') 
+    ? window.location.origin 
+    : window.location.origin;
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -86,6 +90,18 @@ export default function SetupInstructions() {
                   {copiedStep === 3 ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
+              {window.location.hostname.includes('webcontainer-api.io') && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
+                  <div className="flex items-center">
+                    <AlertCircle className="w-5 h-5 text-blue-600 mr-2" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-semibold mb-1">WebContainer Environment Detected</p>
+                      <p>You're running in a dynamic environment. Copy this exact URL and add it to your Google OAuth settings:</p>
+                      <code className="bg-blue-100 px-2 py-1 rounded mt-1 block">{currentDomain}</code>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <a
               href="https://console.cloud.google.com/apis/credentials"
