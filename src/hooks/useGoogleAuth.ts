@@ -99,7 +99,8 @@ export const useGoogleAuth = () => {
       window.googleAuthCallback = (response: any) => {
         try {
           if (response.error) {
-            throw new Error(response.error);
+            console.error('Google Auth Error:', response.error);
+            throw new Error(`Google authentication failed: ${response.error}`);
           }
 
           // Decode JWT token to get user info
@@ -119,57 +120,25 @@ export const useGoogleAuth = () => {
           resolve(user);
         } catch (error) {
           setIsLoading(false);
-          setError(error instanceof Error ? error.message : 'Authentication failed');
+          const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+          console.error('Google Auth Callback Error:', error);
+          setError(errorMessage);
           reject(error);
         }
       };
 
       // Trigger Google sign-in
       window.google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.log('Google prompt not displayed, trying popup method...');
-          // Fallback to popup if prompt is not displayed
-          try {
-            window.google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CONFIG.clientId,
-            scope: GOOGLE_CONFIG.scope,
-            callback: (response: any) => {
-              if (response.error) {
-                setIsLoading(false);
-                setError(`Authentication failed: ${response.error}. Please check your Google OAuth configuration.`);
-                reject(new Error(response.error));
-                return;
-              }
-
-              // Get user info using the access token
-              fetch(`https://www.googleapis.com/oauth2/v2/userinfo?access_token=${response.access_token}`)
-                .then(res => res.json())
-                .then(userInfo => {
-                  const user: GoogleUser = {
-                    id: userInfo.id,
-                    email: userInfo.email,
-                    name: userInfo.name,
-                    firstName: userInfo.given_name || '',
-                    lastName: userInfo.family_name || '',
-                    avatar: userInfo.picture || '',
-                    verified: userInfo.verified_email || false,
-                  };
-
-                  setIsLoading(false);
-                  resolve(user);
-                })
-                .catch(error => {
-                  setIsLoading(false);
-                  setError('Failed to get user information');
-                  reject(error);
-                });
-            },
-            }).requestAccessToken();
-          } catch (popupError) {
-            setIsLoading(false);
-            setError('Popup blocked by browser. Please allow popups for this site and try again.');
-            reject(new Error('Popup blocked'));
-          }
+        console.log('Google prompt notification:', notification);
+        
+        if (notification.isNotDisplayed()) {
+          setIsLoading(false);
+          setError('Google Sign-In is not available. Please check your Google OAuth configuration and ensure this domain is authorized.');
+          reject(new Error('Google Sign-In not displayed'));
+        } else if (notification.isSkippedMoment()) {
+          setIsLoading(false);
+          setError('Google Sign-In was dismissed. Please try again.');
+          reject(new Error('Google Sign-In skipped'));
         }
       });
     });
